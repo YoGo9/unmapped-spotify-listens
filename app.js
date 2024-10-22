@@ -1,9 +1,4 @@
 const listensContainer = document.getElementById('listens-container');
-const addButton = document.getElementById('add-button');
-const selectAllCheckbox = document.createElement('input');
-
-// Placeholder image URL for when no cover art is available
-const placeholderCoverArtUrl = 'https://via.placeholder.com/50x50.png?text=No+Art';
 
 // Variables to hold user input values
 let listenBrainzToken = '';
@@ -69,13 +64,10 @@ async function fetchListens() {
     // Log the full API response to console for debugging
     console.log('Full API Response:', data);
 
-    // Now fetch the listens from the correct payload field
+    // Filter listens to only include unmapped listens (those without mbid_mapping)
     if (data && data.payload && data.payload.listens) {
-      // Filter unmapped listens that have no Spotify album link
-      const mappedListens = data.payload.listens.filter(listen => listen.track_metadata.additional_info.spotify_album_id);
-
-      // Display listens with Spotify album links, Harmony submission link, and MusicBrainz search button
-      displayListens(mappedListens);
+      const unmappedListens = data.payload.listens.filter(listen => !listen.track_metadata.mbid_mapping);
+      displayListens(unmappedListens); // Only display unmapped listens
     } else {
       throw new Error('No listens found or incorrect response structure.');
     }
@@ -92,7 +84,7 @@ function displayListens(listens) {
   listensContainer.innerHTML = '';  // Clear previous listens
 
   if (listens.length === 0) {
-    listensContainer.innerHTML = '<p>No listens with Spotify links found for this user.</p>';
+    listensContainer.innerHTML = '<p>No unmapped listens found for this user.</p>';
     return;
   }
 
@@ -129,7 +121,7 @@ function displayListens(listens) {
       artistLinks += artistLink + (i < artistNames.length - 1 ? ', ' : '');
     });
 
-    // Display listen item with the Spotify album link, Harmony submission link, and MusicBrainz search button with logos
+    // Display listen item with the Spotify album link, Harmony submission link, and MusicBrainz search button
     listenItem.innerHTML = `
       <div style="margin-right: 15px; flex-grow: 1;">
         <strong>${trackName}</strong> by ${artistLinks} (${trackDuration})
