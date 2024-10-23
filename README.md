@@ -19,8 +19,3 @@ You can try the tool here:
 2. Input your ListenBrainz API token.
 3. Optionally, specify how many recent listens to fetch (default is 100).
 4. Click "Fetch Listens" to view unmapped listens and check or add them to the database via the provided links.
-
-## Requirements
-
-- A ListenBrainz account and API token.
-- Internet connection to fetch data from ListenBrainz.
