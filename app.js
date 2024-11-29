@@ -103,7 +103,7 @@ function displayListens(listens) {
     const trackDuration = durationMs ? `${Math.floor(durationMs / 60000)}:${('0' + Math.floor((durationMs % 60000) / 1000)).slice(-2)}` : 'Unknown duration';
 
     // Generate the correct Harmony submission link
-    const harmonySubmissionLink = `https://harmony.pulsewidth.org.uk/release?url=${encodeURIComponent(spotifyAlbumLink)}&spotify&deezer&itunes&tidal&musicbrainz&region=US`;
+    const harmonySubmissionLink = `https://harmony.pulsewidth.org.uk/release?url=${encodeURIComponent(spotifyAlbumLink)}&category=all`;
 
     // Generate the MusicBrainz search link for artist and track
     const musicBrainzSearchLink = `https://musicbrainz.org/search?query=artist%3A%22${encodeURIComponent(artistNames[0])}%22+AND+recording%3A%22${encodeURIComponent(trackName)}%22&type=recording&limit=25&method=advanced`;
