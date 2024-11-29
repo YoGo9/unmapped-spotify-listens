@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -58,6 +59,7 @@
     .listen-item {
       display: flex;
       align-items: center;
+      flex-wrap: wrap; /* Ensure consistent wrapping */
       margin: 10px 0;
       padding: 10px;
       border: 1px solid #ccc;
@@ -65,8 +67,22 @@
       background-color: #fafafa;
     }
 
+    .listen-item > div {
+      flex: 1 1 auto;
+      margin-right: 10px; /* Space between text and actions */
+    }
+
+    .listen-item input[type="text"] {
+      flex: 2 1 auto; /* Larger flex-grow for input */
+      margin: 5px 0;
+    }
+
+    .listen-item button {
+      flex: 1 1 auto; /* Smaller flex-grow for button */
+      margin: 5px 0 5px 10px; /* Add some left margin to separate from input */
+    }
+
     .listen-item a {
-      margin-left: auto;
       color: #007bff;
       text-decoration: none;
     }
@@ -79,10 +95,6 @@
       text-align: center;
       margin-top: 20px;
       color: #999;
-    }
-
-    .hidden {
-      display: none;
     }
   </style>
 </head>
