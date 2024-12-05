@@ -172,3 +172,52 @@ async function submitListen(trackMetadata) {
     alert('Failed to submit listen.');
   }
 }
+
+// Function to sanitize input and remove/escape special characters
+function sanitizeInput(input) {
+  return input.replace(/['"]/g, '\\$&'); // Escapes single and double quotes
+}
+
+// Function to extract MBID from a MusicBrainz URL and submit it
+async function submitRecordingMBID() {
+  const rawRecordingUrl = document.getElementById('recording-url').value;
+  const recordingUrl = sanitizeInput(rawRecordingUrl); // Sanitize input
+  const mbidMatch = recordingUrl.match(/recording\/([a-f0-9-]{36})/);
+
+  if (!mbidMatch) {
+    alert('Invalid MusicBrainz Recording URL.');
+    return;
+  }
+
+  const recordingMBID = mbidMatch[1];
+  const userToken = document.getElementById('api-token').value;
+
+  if (!userToken) {
+    alert('Please provide an API Token.');
+    return;
+  }
+
+  try {
+    const response = await fetch('https://api.listenbrainz.org/1/feedback/recording-feedback', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Token ${userToken}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        recording_mbid: recordingMBID,
+        score: 1 // Example: submitting as 'loved'
+      })
+    });
+
+    if (response.ok) {
+      alert('Recording MBID submitted successfully.');
+    } else {
+      const errorData = await response.json();
+      alert(`Error: ${errorData.error}`);
+    }
+  } catch (error) {
+    console.error('Error submitting MBID:', error);
+    alert('An error occurred while submitting the MBID.');
+  }
+}
