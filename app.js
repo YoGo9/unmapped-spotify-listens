@@ -173,19 +173,19 @@ async function submitListen(trackMetadata) {
   }
 }
 
-// Function to sanitize input and remove/escape special characters
-function sanitizeInput(input) {
-  return input.replace(/['"]/g, '\\$&'); // Escapes single and double quotes
+// Function to encode and sanitize input
+function encodeAndSanitize(input) {
+  return encodeURIComponent(input.trim()); // Encodes special characters and trims whitespace
 }
 
 // Function to extract MBID from a MusicBrainz URL and submit it
 async function submitRecordingMBID() {
   const rawRecordingUrl = document.getElementById('recording-url').value;
-  const recordingUrl = sanitizeInput(rawRecordingUrl); // Sanitize input
-  const mbidMatch = recordingUrl.match(/recording\/([a-f0-9-]{36})/);
+  const sanitizedUrl = encodeAndSanitize(rawRecordingUrl); // Sanitize and encode the input URL
+  const mbidMatch = sanitizedUrl.match(/recording%2F([a-f0-9-]{36})/); // Match after encoding
 
   if (!mbidMatch) {
-    alert('Invalid MusicBrainz Recording URL.');
+    alert('Invalid MusicBrainz Recording URL. Please double-check it.');
     return;
   }
 
@@ -193,7 +193,7 @@ async function submitRecordingMBID() {
   const userToken = document.getElementById('api-token').value;
 
   if (!userToken) {
-    alert('Please provide an API Token.');
+    alert('Please provide a valid API Token.');
     return;
   }
 
@@ -202,12 +202,12 @@ async function submitRecordingMBID() {
       method: 'POST',
       headers: {
         'Authorization': `Token ${userToken}`,
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
       },
       body: JSON.stringify({
         recording_mbid: recordingMBID,
-        score: 1 // Example: submitting as 'loved'
-      })
+        score: 1, // Example: marking the track as 'loved'
+      }),
     });
 
     if (response.ok) {
@@ -218,6 +218,6 @@ async function submitRecordingMBID() {
     }
   } catch (error) {
     console.error('Error submitting MBID:', error);
-    alert('An error occurred while submitting the MBID.');
+    alert('An unexpected error occurred. Please try again.');
   }
 }
