@@ -5,6 +5,40 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ListenBrainz - Unmapped Listens with Spotify Links</title>
   <style>
+    :root {
+      --bg-color: #f5f5f5;
+      --container-bg: #fff;
+      --text-color: #333;
+      --border-color: #ccc;
+      --input-bg: #fff;
+      --card-bg: #fafafa;
+      --stats-bg: #f8f9fa;
+      --primary-color: #28a745;
+      --primary-hover: #218838;
+      --link-color: #007bff;
+      --highlight-color: #e6f3ff;
+      --shadow-color: rgba(0, 0, 0, 0.1);
+      --clear-color: #dc3545;
+      --secondary-text: #666;
+    }
+    
+    body.dark-mode {
+      --bg-color: #222;
+      --container-bg: #333;
+      --text-color: #eee;
+      --border-color: #555;
+      --input-bg: #444;
+      --card-bg: #3a3a3a;
+      --stats-bg: #2a2a2a;
+      --primary-color: #2b9e48;
+      --primary-hover: #1c7430;
+      --link-color: #4da3ff;
+      --highlight-color: #1e4976;
+      --shadow-color: rgba(0, 0, 0, 0.3);
+      --clear-color: #e55c6c;
+      --secondary-text: #bbb;
+    }
+    
     body {
       font-family: Arial, sans-serif;
       margin: 0;
@@ -14,42 +48,47 @@
       align-items: center;
       flex-direction: column;
       min-height: 100vh;
-      background-color: #f5f5f5;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      transition: all 0.3s ease;
     }
 
     .container {
       width: 90%;
       max-width: 600px;
       padding: 20px;
-      background-color: #fff;
-      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      background-color: var(--container-bg);
+      box-shadow: 0 0 10px var(--shadow-color);
       border-radius: 10px;
     }
 
     h1 {
-      text-align: center;
+      margin-top: 0;
       margin-bottom: 20px;
+      text-align: center;
     }
 
     h2 {
       margin-top: 20px;
       margin-bottom: 15px;
-      color: #333;
+      color: var(--text-color);
     }
 
     input[type="text"], input[type="number"] {
       width: 100%;
       padding: 10px;
       margin-bottom: 15px;
-      border: 1px solid #ccc;
+      border: 1px solid var(--border-color);
       border-radius: 5px;
       box-sizing: border-box;
+      background-color: var(--input-bg);
+      color: var(--text-color);
     }
 
     button {
       width: 100%;
       padding: 10px;
-      background-color: #28a745;
+      background-color: var(--primary-color);
       color: white;
       border: none;
       border-radius: 5px;
@@ -58,7 +97,7 @@
     }
 
     button:hover {
-      background-color: #218838;
+      background-color: var(--primary-hover);
     }
 
     .listen-item {
@@ -67,9 +106,9 @@
       flex-wrap: wrap; /* Ensure consistent wrapping */
       margin: 10px 0;
       padding: 10px;
-      border: 1px solid #ccc;
+      border: 1px solid var(--border-color);
       border-radius: 5px;
-      background-color: #fafafa;
+      background-color: var(--card-bg);
     }
 
     .listen-item > div {
@@ -88,7 +127,7 @@
     }
 
     .listen-item a {
-      color: #007bff;
+      color: var(--link-color);
       text-decoration: none;
     }
 
@@ -99,16 +138,16 @@
     .no-results {
       text-align: center;
       margin-top: 20px;
-      color: #999;
+      color: var(--secondary-text);
     }
 
     /* Statistics Dashboard Styles */
     .stats-container {
       margin-bottom: 30px;
       padding: 15px;
-      background-color: #f8f9fa;
+      background-color: var(--stats-bg);
       border-radius: 8px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      box-shadow: 0 2px 4px var(--shadow-color);
     }
 
     .stats-grid {
@@ -119,26 +158,26 @@
 
     .stat-card {
       padding: 15px;
-      background-color: white;
+      background-color: var(--container-bg);
       border-radius: 6px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      box-shadow: 0 1px 3px var(--shadow-color);
     }
 
     .stat-title {
       font-size: 14px;
-      color: #666;
+      color: var(--secondary-text);
       margin-bottom: 8px;
     }
 
     .stat-value {
       font-size: 20px;
       font-weight: bold;
-      color: #333;
+      color: var(--text-color);
     }
 
     .stat-percentage {
       font-size: 14px;
-      color: #666;
+      color: var(--secondary-text);
       font-weight: normal;
     }
 
@@ -150,7 +189,7 @@
       display: flex;
       justify-content: space-between;
       padding: 6px 0;
-      border-bottom: 1px solid #eee;
+      border-bottom: 1px solid var(--border-color);
     }
 
     .artist-stat:last-child {
@@ -163,7 +202,7 @@
 
     .artist-filter-link {
       cursor: pointer;
-      color: #007bff;
+      color: var(--link-color);
     }
 
     .artist-filter-link:hover {
@@ -171,11 +210,11 @@
     }
 
     .artist-count {
-      color: #666;
+      color: var(--secondary-text);
     }
 
     .active-filter {
-      background-color: #e6f3ff;
+      background-color: var(--highlight-color);
       padding: 6px 8px;
       border-radius: 4px;
       margin: 0 -8px;
@@ -184,7 +223,7 @@
     .clear-filter {
       margin-top: 10px;
       text-align: center;
-      color: #dc3545;
+      color: var(--clear-color);
       cursor: pointer;
       font-size: 14px;
       padding: 5px;
@@ -197,10 +236,108 @@
     .listens-list {
       margin-top: 20px;
     }
+    
+    /* Header with GitHub and theme toggle */
+    .top-actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    
+    /* GitHub link styles */
+    .github-link {
+      display: flex;
+      align-items: center;
+      color: var(--text-color);
+      text-decoration: none;
+      transition: transform 0.2s ease;
+    }
+    
+    .github-link:hover {
+      transform: scale(1.1);
+    }
+    
+    .github-icon {
+      color: var(--text-color);
+    }
+    
+    /* Simple theme toggle */
+    .theme-toggle {
+      display: flex;
+      align-items: center;
+    }
+    
+    .theme-label {
+      margin-right: 8px;
+      font-size: 14px;
+    }
+    
+    .toggle-switch {
+      position: relative;
+      display: inline-block;
+      width: 46px;
+      height: 24px;
+    }
+    
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    
+    .toggle-slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #ccc;
+      transition: .3s;
+      border-radius: 24px;
+    }
+    
+    .toggle-slider:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: .3s;
+      border-radius: 50%;
+    }
+    
+    input:checked + .toggle-slider {
+      background-color: var(--primary-color);
+    }
+    
+    input:checked + .toggle-slider:before {
+      transform: translateX(22px);
+    }
   </style>
 </head>
 <body>
   <div class="container">
+    <!-- Header with GitHub link and theme toggle -->
+    <div class="top-actions">
+      <a href="https://github.com/YoGo9/unmapped-spotify-listens" target="_blank" class="github-link" title="View on GitHub">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="github-icon">
+          <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
+        </svg>
+      </a>
+      
+      <div class="theme-toggle">
+        <span class="theme-label">Dark Mode</span>
+        <label class="toggle-switch">
+          <input type="checkbox" id="theme-toggle" onchange="toggleDarkMode()">
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+    </div>
+    
     <h1>Unmapped Listens with Spotify Links</h1>
 
     <!-- Input for Username -->
