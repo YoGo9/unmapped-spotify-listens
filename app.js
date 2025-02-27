@@ -29,7 +29,7 @@ async function fetchListens() {
 
   try {
     const response = await fetch(
-      `https://api.listenbrainz.org/1/user/${username}/listens?count=${numRecentListens}`,
+      `https://api.listenbrainz.org/1/user/${encodeURIComponent(username)}/listens?count=${numRecentListens}`,
       {
         headers: {
           Authorization: `Token ${listenBrainzToken}`,
@@ -73,14 +73,16 @@ function displayListens(listens) {
     listenItem.classList.add('listen-item');
     listenItem.innerHTML = `
       <div style="flex-grow: 1;">
-        <strong>${trackName}</strong> by ${artistNames
+        <strong>${escapeHtml(trackName)}</strong> by ${artistNames
       .map((artist, i) =>
-        spotifyArtistLinks[i] ? `<a href="${spotifyArtistLinks[i]}" target="_blank">${artist}</a>` : artist
+        spotifyArtistLinks[i] ? 
+        `<a href="${escapeHtml(spotifyArtistLinks[i])}" target="_blank">${escapeHtml(artist)}</a>` : 
+        escapeHtml(artist)
       )
       .join(', ')}
       </div>
       ${spotifyAlbumLink ? `
-        <a href="${spotifyAlbumLink}" target="_blank" title="Open in Spotify">
+        <a href="${escapeHtml(spotifyAlbumLink)}" target="_blank" title="Open in Spotify">
           <img src="spotlogo.png" alt="Spotify" style="width: 30px; height: 30px; margin-right: 10px;">
         </a>
         <a href="https://harmony.pulsewidth.org.uk/release?url=${encodeURIComponent(spotifyAlbumLink)}&category=all" target="_blank" title="Submit to Harmony">
@@ -91,10 +93,33 @@ function displayListens(listens) {
         </a>
       ` : '<span>No Spotify link available</span>'}
       <input type="text" id="recording-url-${index}" placeholder="Enter MusicBrainz Recording URL">
-      <button onclick="submitManualMapping('${recordingMsid}', 'recording-url-${index}', '${trackName}')">Submit MBID</button>
+      <button onclick="submitManualMapping('${escapeJsString(recordingMsid)}', 'recording-url-${index}', '${escapeJsString(trackName)}')">Submit MBID</button>
     `;
     listensContainer.appendChild(listenItem);
   });
+}
+
+// Function to escape HTML to prevent XSS
+function escapeHtml(unsafe) {
+  return unsafe
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+// Function to escape strings used in JavaScript function calls
+function escapeJsString(str) {
+  return str
+    .replace(/\\/g, '\\\\')
+    .replace(/'/g, "\\'")
+    .replace(/"/g, '\\"');
+}
+
+// Function to encode and sanitize input
+function encodeAndSanitize(input) {
+  return encodeURIComponent(input.trim()); // Encodes special characters and trims whitespace
 }
 
 // Function to submit a manual MBID mapping
@@ -171,11 +196,6 @@ async function submitListen(trackMetadata) {
     console.error('Error submitting listen:', error);
     alert('Failed to submit listen.');
   }
-}
-
-// Function to encode and sanitize input
-function encodeAndSanitize(input) {
-  return encodeURIComponent(input.trim()); // Encodes special characters and trims whitespace
 }
 
 // Function to extract MBID from a MusicBrainz URL and submit it
