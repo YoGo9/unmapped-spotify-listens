@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -30,6 +29,12 @@
     h1 {
       text-align: center;
       margin-bottom: 20px;
+    }
+
+    h2 {
+      margin-top: 20px;
+      margin-bottom: 15px;
+      color: #333;
     }
 
     input[type="text"], input[type="number"] {
@@ -96,6 +101,102 @@
       margin-top: 20px;
       color: #999;
     }
+
+    /* Statistics Dashboard Styles */
+    .stats-container {
+      margin-bottom: 30px;
+      padding: 15px;
+      background-color: #f8f9fa;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+
+    .stat-card {
+      padding: 15px;
+      background-color: white;
+      border-radius: 6px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .stat-title {
+      font-size: 14px;
+      color: #666;
+      margin-bottom: 8px;
+    }
+
+    .stat-value {
+      font-size: 20px;
+      font-weight: bold;
+      color: #333;
+    }
+
+    .stat-percentage {
+      font-size: 14px;
+      color: #666;
+      font-weight: normal;
+    }
+
+    .top-artists {
+      margin-top: 10px;
+    }
+
+    .artist-stat {
+      display: flex;
+      justify-content: space-between;
+      padding: 6px 0;
+      border-bottom: 1px solid #eee;
+    }
+
+    .artist-stat:last-child {
+      border-bottom: none;
+    }
+
+    .artist-name {
+      font-weight: 500;
+    }
+
+    .artist-filter-link {
+      cursor: pointer;
+      color: #007bff;
+    }
+
+    .artist-filter-link:hover {
+      text-decoration: underline;
+    }
+
+    .artist-count {
+      color: #666;
+    }
+
+    .active-filter {
+      background-color: #e6f3ff;
+      padding: 6px 8px;
+      border-radius: 4px;
+      margin: 0 -8px;
+    }
+
+    .clear-filter {
+      margin-top: 10px;
+      text-align: center;
+      color: #dc3545;
+      cursor: pointer;
+      font-size: 14px;
+      padding: 5px;
+    }
+
+    .clear-filter:hover {
+      text-decoration: underline;
+    }
+
+    .listens-list {
+      margin-top: 20px;
+    }
   </style>
 </head>
 <body>
@@ -119,7 +220,7 @@
 
     <!-- Container for displaying listens -->
     <div id="listens-container" class="listens-container">
-      <!-- Listens will be displayed here -->
+      <!-- Statistics and listens will be displayed here -->
     </div>
   </div>
 
