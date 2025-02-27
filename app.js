@@ -42,10 +42,15 @@ async function fetchListens() {
     }
 
     const data = await response.json();
-    const unmappedListens = data.payload.listens.filter(
-      (listen) => !listen.track_metadata.mbid_mapping
+    
+    // Filter for unmapped listens that are from Spotify
+    const unmappedSpotifyListens = data.payload.listens.filter(
+      (listen) => 
+        !listen.track_metadata.mbid_mapping && 
+        listen.track_metadata.additional_info.music_service === "spotify.com"
     );
-    displayListens(unmappedListens);
+    
+    displayListens(unmappedSpotifyListens);
   } catch (error) {
     console.error('Error fetching listens:', error);
     alert('Failed to fetch listens.');
@@ -57,7 +62,7 @@ function displayListens(listens) {
   listensContainer.innerHTML = ''; // Clear previous listens
 
   if (listens.length === 0) {
-    listensContainer.innerHTML = '<p>No unmapped listens found.</p>';
+    listensContainer.innerHTML = '<p>No unmapped Spotify listens found.</p>';
     return;
   }
 
