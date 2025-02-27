@@ -5,13 +5,28 @@ let listenBrainzToken = '';
 let numRecentListens = 100; // Default value to fetch 100 recent listens
 let username = '';
 
-// Check if API token is stored in localStorage and prefill it
+// Check if API token and theme preference are stored in localStorage and apply them
 window.onload = function () {
   const savedToken = localStorage.getItem('apiToken');
   if (savedToken) {
     document.getElementById('api-token').value = savedToken;
   }
+  
+  // Check for theme preference and apply it
+  const darkModePreference = localStorage.getItem('darkMode');
+  if (darkModePreference === 'true') {
+    document.body.classList.add('dark-mode');
+    if (document.getElementById('theme-toggle')) {
+      document.getElementById('theme-toggle').checked = true;
+    }
+  }
 };
+
+// Function to toggle dark mode
+function toggleDarkMode() {
+  const isDarkMode = document.body.classList.toggle('dark-mode');
+  localStorage.setItem('darkMode', isDarkMode);
+}
 
 // Function to fetch listens from ListenBrainz
 async function fetchListens() {
