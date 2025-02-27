@@ -43,29 +43,122 @@ async function fetchListens() {
 
     const data = await response.json();
     
+    // Get all listens and unmapped Spotify listens
+    const allListens = data.payload.listens;
+    const totalListens = allListens.length;
+    
+    // Get all unmapped listens (regardless of source)
+    const allUnmappedListens = allListens.filter(listen => !listen.track_metadata.mbid_mapping);
+    
     // Filter for unmapped listens that are from Spotify
-    const unmappedSpotifyListens = data.payload.listens.filter(
+    const unmappedSpotifyListens = allListens.filter(
       (listen) => 
         !listen.track_metadata.mbid_mapping && 
         listen.track_metadata.additional_info.music_service === "spotify.com"
     );
     
+    // Store all unmapped listens in a global variable to use for filtering
+    window.allUnmappedSpotifyListens = unmappedSpotifyListens;
+    
+    // Generate statistics
+    generateStatistics(totalListens, allUnmappedListens, unmappedSpotifyListens);
+    
+    // Display the listens
     displayListens(unmappedSpotifyListens);
+    
+    // Add click event listeners to artist names for filtering
+    setupArtistFiltering();
   } catch (error) {
     console.error('Error fetching listens:', error);
     alert('Failed to fetch listens.');
   }
 }
 
+// Function to generate statistics
+function generateStatistics(totalListens, allUnmappedListens, unmappedSpotifyListens) {
+  // Create stats container
+  const statsContainer = document.createElement('div');
+  statsContainer.classList.add('stats-container');
+  
+  // Calculate percentages
+  const allUnmappedPercentage = (allUnmappedListens.length / totalListens * 100).toFixed(1);
+  const spotifyUnmappedPercentage = (unmappedSpotifyListens.length / totalListens * 100).toFixed(1);
+  
+  // Get top unmapped artists
+  const artistCounts = {};
+  unmappedSpotifyListens.forEach(listen => {
+    const artistName = listen.track_metadata.artist_name;
+    artistCounts[artistName] = (artistCounts[artistName] || 0) + 1;
+  });
+  
+  // Sort artists by count
+  const sortedArtists = Object.entries(artistCounts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5); // Just take top 5
+  
+  // Create HTML for stats
+  statsContainer.innerHTML = `
+    <h2>Statistics Dashboard</h2>
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-title">Total Listens</div>
+        <div class="stat-value">${totalListens}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-title">All Unmapped</div>
+        <div class="stat-value">${allUnmappedListens.length} <span class="stat-percentage">(${allUnmappedPercentage}%)</span></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-title">Unmapped Spotify</div>
+        <div class="stat-value">${unmappedSpotifyListens.length} <span class="stat-percentage">(${spotifyUnmappedPercentage}%)</span></div>
+      </div>
+    </div>
+    <div class="stat-card" style="margin-top: 15px;">
+      <div class="stat-title">Top Unmapped Artists <span class="filter-notice" id="filter-notice"></span></div>
+      <div class="top-artists">
+        ${sortedArtists.map(([artist, count]) => 
+          `<div class="artist-stat" data-artist="${escapeJsString(artist)}">
+            <span class="artist-name artist-filter-link">${escapeHtml(artist)}</span>
+            <span class="artist-count">${count} tracks</span>
+          </div>`
+        ).join('')}
+      </div>
+      ${sortedArtists.length > 0 ? '<div class="clear-filter" id="clear-filter" style="display: none;">Clear Filter</div>' : ''}
+    </div>
+  `;
+  
+  // Insert the stats at the top of the listens container
+  listensContainer.innerHTML = '';
+  listensContainer.appendChild(statsContainer);
+}
+
 // Function to display listens in the UI
-function displayListens(listens) {
-  listensContainer.innerHTML = ''; // Clear previous listens
+function displayListens(listens, filteredArtist = null) {
+  // Remove any existing listens-list if it exists
+  const existingListensList = document.querySelector('.listens-list');
+  if (existingListensList) {
+    existingListensList.remove();
+  }
+  
+  // Create a container for the listens
+  const listensListDiv = document.createElement('div');
+  listensListDiv.classList.add('listens-list');
 
   if (listens.length === 0) {
-    listensContainer.innerHTML = '<p>No unmapped Spotify listens found.</p>';
+    listensListDiv.innerHTML = '<p class="no-results">No unmapped Spotify listens found.</p>';
+    listensContainer.appendChild(listensListDiv);
     return;
   }
 
+  // Add a heading for the listens
+  const listensHeading = document.createElement('h2');
+  if (filteredArtist) {
+    listensHeading.textContent = `Unmapped Spotify Listens for ${filteredArtist} (${listens.length})`;
+  } else {
+    listensHeading.textContent = `Unmapped Spotify Listens (${listens.length})`;
+  }
+  listensListDiv.appendChild(listensHeading);
+  
   listens.forEach((listen, index) => {
     const trackMetadata = listen.track_metadata;
     const artistNames = trackMetadata.additional_info.artist_names || [];
@@ -100,8 +193,10 @@ function displayListens(listens) {
       <input type="text" id="recording-url-${index}" placeholder="Enter MusicBrainz Recording URL">
       <button onclick="submitManualMapping('${escapeJsString(recordingMsid)}', 'recording-url-${index}', '${escapeJsString(trackName)}')">Submit MBID</button>
     `;
-    listensContainer.appendChild(listenItem);
+    listensListDiv.appendChild(listenItem);
   });
+
+  listensContainer.appendChild(listensListDiv);
 }
 
 // Function to escape HTML to prevent XSS
@@ -244,5 +339,73 @@ async function submitRecordingMBID() {
   } catch (error) {
     console.error('Error submitting MBID:', error);
     alert('An unexpected error occurred. Please try again.');
+  }
+}
+
+// Setup artist filtering functionality
+function setupArtistFiltering() {
+  console.log("Setting up artist filtering");
+  const artistLinks = document.querySelectorAll('.artist-filter-link');
+  const clearFilterBtn = document.getElementById('clear-filter');
+  
+  console.log(`Found ${artistLinks.length} artist links`);
+  
+  if (!artistLinks.length) return;
+  
+  // Add click events to artist names
+  artistLinks.forEach(link => {
+    link.addEventListener('click', function() {
+      console.log("Artist link clicked");
+      const artistDiv = this.closest('.artist-stat');
+      const artist = artistDiv.getAttribute('data-artist');
+      console.log(`Filtering for artist: ${artist}`);
+      
+      // Filter the listens
+      const filteredListens = window.allUnmappedSpotifyListens.filter(listen => {
+        return listen.track_metadata.artist_name.includes(artist);
+      });
+      
+      console.log(`Found ${filteredListens.length} matches`);
+      
+      // Update UI to show filtering is active
+      const filterNotice = document.getElementById('filter-notice');
+      if (filterNotice) {
+        filterNotice.textContent = ` (filtered)`;
+      }
+      
+      if (clearFilterBtn) {
+        clearFilterBtn.style.display = 'block';
+      }
+      
+      // Highlight the selected artist
+      document.querySelectorAll('.artist-stat').forEach(stat => {
+        stat.classList.remove('active-filter');
+      });
+      artistDiv.classList.add('active-filter');
+      
+      // Display the filtered listens
+      displayListens(filteredListens, artist);
+    });
+  });
+  
+  // Clear filter functionality
+  if (clearFilterBtn) {
+    clearFilterBtn.addEventListener('click', function() {
+      console.log("Clear filter clicked");
+      // Reset UI
+      const filterNotice = document.getElementById('filter-notice');
+      if (filterNotice) {
+        filterNotice.textContent = '';
+      }
+      this.style.display = 'none';
+      
+      // Remove highlight
+      document.querySelectorAll('.artist-stat').forEach(stat => {
+        stat.classList.remove('active-filter');
+      });
+      
+      // Display all listens
+      displayListens(window.allUnmappedSpotifyListens);
+    });
   }
 }
