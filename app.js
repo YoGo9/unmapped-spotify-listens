@@ -2,8 +2,9 @@ const listensContainer = document.getElementById('listens-container');
 
 // Variables to hold user input values
 let listenBrainzToken = '';
-let numRecentListens = 100; // Default value to fetch 100 recent listens
+let numRecentListens = 1000; // Changed default from 100 to 1000
 let username = '';
+let isFetching = false; // Track fetching state
 
 // Check if API token and theme preference are stored in localStorage and apply them
 window.onload = function () {
@@ -11,6 +12,9 @@ window.onload = function () {
   if (savedToken) {
     document.getElementById('api-token').value = savedToken;
   }
+  
+  // Set default number of listens to 1000
+  document.getElementById('num-listens').value = 1000;
   
   // Check for theme preference and apply it
   const darkModePreference = localStorage.getItem('darkMode');
@@ -28,11 +32,81 @@ function toggleDarkMode() {
   localStorage.setItem('darkMode', isDarkMode);
 }
 
+// Function to create and show the loading indicator
+function showLoadingIndicator() {
+  // Remove any existing loading indicator
+  hideLoadingIndicator();
+  
+  // Create loading container
+  const loadingContainer = document.createElement('div');
+  loadingContainer.id = 'loading-container';
+  loadingContainer.classList.add('loading-container');
+  
+  // Create spinner
+  const spinner = document.createElement('div');
+  spinner.classList.add('loading-spinner');
+  
+  // Create text container
+  const textContainer = document.createElement('div');
+  textContainer.classList.add('loading-text-container');
+  
+  // Create main loading text
+  const loadingText = document.createElement('div');
+  loadingText.id = 'loading-text';
+  loadingText.classList.add('loading-text');
+  loadingText.textContent = 'Fetching listens...';
+  
+  // Create progress text
+  const progressText = document.createElement('div');
+  progressText.id = 'loading-progress';
+  progressText.classList.add('loading-progress');
+  progressText.textContent = 'This may take a moment for large datasets';
+  
+  // Assemble the loading indicator
+  textContainer.appendChild(loadingText);
+  textContainer.appendChild(progressText);
+  loadingContainer.appendChild(spinner);
+  loadingContainer.appendChild(textContainer);
+  
+  // Insert at the top of the listens container
+  listensContainer.innerHTML = '';
+  listensContainer.appendChild(loadingContainer);
+}
+
+// Function to update the loading text
+function updateLoadingText(text) {
+  const loadingText = document.getElementById('loading-text');
+  if (loadingText) {
+    loadingText.textContent = text;
+  }
+}
+
+// Function to update the loading progress
+function updateLoadingProgress(text) {
+  const progressText = document.getElementById('loading-progress');
+  if (progressText) {
+    progressText.textContent = text;
+  }
+}
+
+// Function to hide the loading indicator
+function hideLoadingIndicator() {
+  const existingLoader = document.getElementById('loading-container');
+  if (existingLoader) {
+    existingLoader.remove();
+  }
+}
+
 // Function to fetch listens from ListenBrainz
 async function fetchListens() {
+  if (isFetching) {
+    alert('A fetch operation is already in progress. Please wait.');
+    return;
+  }
+  
   username = document.getElementById('username').value;
   listenBrainzToken = document.getElementById('api-token').value;
-  numRecentListens = document.getElementById('num-listens').value || 100;
+  numRecentListens = document.getElementById('num-listens').value || 1000;
 
   if (!username || !listenBrainzToken) {
     alert('Please enter both Username and API Token.');
@@ -43,6 +117,11 @@ async function fetchListens() {
   localStorage.setItem('apiToken', listenBrainzToken);
 
   try {
+    isFetching = true;
+    showLoadingIndicator();
+    updateLoadingText('Fetching listens from ListenBrainz...');
+    updateLoadingProgress(`Requesting ${numRecentListens} recent listens`);
+    
     const response = await fetch(
       `https://api.listenbrainz.org/1/user/${encodeURIComponent(username)}/listens?count=${numRecentListens}`,
       {
@@ -56,36 +135,50 @@ async function fetchListens() {
       throw new Error(`Failed to fetch listens. Status: ${response.status}`);
     }
 
+    updateLoadingText('Processing data...');
     const data = await response.json();
     
     // Get all listens and unmapped Spotify listens
+    updateLoadingProgress('Analyzing listen data...');
     const allListens = data.payload.listens;
     const totalListens = allListens.length;
+    updateLoadingProgress(`Found ${totalListens} total listens`);
     
     // Get all unmapped listens (regardless of source)
     const allUnmappedListens = allListens.filter(listen => !listen.track_metadata.mbid_mapping);
+    updateLoadingProgress(`Found ${allUnmappedListens.length} unmapped listens`);
     
     // Filter for unmapped listens that are from Spotify
+    updateLoadingText('Identifying unmapped Spotify listens...');
     const unmappedSpotifyListens = allListens.filter(
       (listen) => 
         !listen.track_metadata.mbid_mapping && 
         listen.track_metadata.additional_info.music_service === "spotify.com"
     );
+    updateLoadingProgress(`Found ${unmappedSpotifyListens.length} unmapped Spotify listens`);
     
     // Store all unmapped listens in a global variable to use for filtering
     window.allUnmappedSpotifyListens = unmappedSpotifyListens;
     
     // Generate statistics
+    updateLoadingText('Generating statistics...');
     generateStatistics(totalListens, allUnmappedListens, unmappedSpotifyListens);
     
     // Display the listens
+    updateLoadingText('Rendering results...');
     displayListens(unmappedSpotifyListens);
     
     // Add click event listeners to artist names for filtering
     setupArtistFiltering();
+    
+    // Hide loading indicator when done
+    hideLoadingIndicator();
   } catch (error) {
     console.error('Error fetching listens:', error);
-    alert('Failed to fetch listens.');
+    alert('Failed to fetch listens: ' + error.message);
+    hideLoadingIndicator();
+  } finally {
+    isFetching = false;
   }
 }
 

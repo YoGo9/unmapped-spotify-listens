@@ -20,6 +20,7 @@
       --shadow-color: rgba(0, 0, 0, 0.1);
       --clear-color: #dc3545;
       --secondary-text: #666;
+      --loading-spinner: #28a745;
     }
     
     body.dark-mode {
@@ -37,6 +38,7 @@
       --shadow-color: rgba(0, 0, 0, 0.3);
       --clear-color: #e55c6c;
       --secondary-text: #bbb;
+      --loading-spinner: #4da3ff;
     }
     
     body {
@@ -317,6 +319,54 @@
     input:checked + .toggle-slider:before {
       transform: translateX(22px);
     }
+
+    /* Loading indicator styles */
+    .loading-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 30px 20px;
+      text-align: center;
+      background-color: var(--stats-bg);
+      border-radius: 8px;
+      box-shadow: 0 2px 4px var(--shadow-color);
+      margin-bottom: 20px;
+    }
+    
+    .loading-spinner {
+      border: 5px solid rgba(0, 0, 0, 0.1);
+      border-radius: 50%;
+      border-top: 5px solid var(--loading-spinner);
+      width: 50px;
+      height: 50px;
+      animation: spin 1s linear infinite;
+      margin-bottom: 20px;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    .loading-text-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    
+    .loading-text {
+      font-size: 18px;
+      font-weight: bold;
+      margin-bottom: 10px;
+      color: var(--text-color);
+    }
+    
+    .loading-progress {
+      font-size: 14px;
+      color: var(--secondary-text);
+      margin-top: 5px;
+    }
   </style>
 </head>
 <body>
@@ -350,7 +400,7 @@
 
     <!-- Input for Number of Recent Listens -->
     <label for="num-listens">Number of Recent Listens:</label>
-    <input type="number" id="num-listens" value="100">
+    <input type="number" id="num-listens" value="1000">
 
     <!-- Button to Fetch Listens -->
     <button onclick="fetchListens()">Fetch Listens</button>
