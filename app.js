@@ -291,7 +291,7 @@ function displayListens(listens, filteredArtist = null) {
         <a href="${escapeHtml(spotifyAlbumLink)}" target="_blank" title="Open in Spotify">
           <img src="spotlogo.png" alt="Spotify" style="width: 30px; height: 30px; margin-right: 10px;">
         </a>
-        <a href="https://harmony.pulsewidth.org.uk/release?url=${encodeURIComponent(spotifyAlbumLink)}&category=all" target="_blank" title="Submit to Harmony">
+        <a href="https://harmony.pulsewidth.org.uk/release?url=${encodeURIComponent(spotifyAlbumLink)}&category=preferred" target="_blank" title="Submit to Harmony">
           <img src="harmonylogo.svg" alt="Harmony" style="width: 30px; height: 30px; margin-right: 10px;">
         </a>
        <a href="https://musicbrainz.org/search?query=artist%3A%22${encodeURIComponent(artistNames[0])}%22+recording%3A%22${encodeURIComponent(trackName)}%22&type=recording&limit=25&method=advanced" target="_blank" title="Search in MusicBrainz">
