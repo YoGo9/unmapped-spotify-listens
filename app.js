@@ -12,6 +12,11 @@ window.onload = function () {
   if (savedToken) {
     document.getElementById('api-token').value = savedToken;
   }
+
+  const savedUsername = localStorage.getItem('lbUsername');
+  if (savedUsername) {
+    document.getElementById('username').value = savedUsername;
+  }
   
   // Set default number of listens to 1000
   document.getElementById('num-listens').value = 1000;
@@ -113,8 +118,9 @@ async function fetchListens() {
     return;
   }
 
-  // Save the API token to localStorage for future use
+  // Save the API token and username to localStorage for future use
   localStorage.setItem('apiToken', listenBrainzToken);
+  localStorage.setItem('lbUsername', username);
 
   try {
     isFetching = true;
