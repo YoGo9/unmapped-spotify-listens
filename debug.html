@@ -24,10 +24,16 @@
       const doc = frame.contentDocument;
       if (!doc || doc.getElementById('issue-9-debug-loader')) return;
 
-      const script = doc.createElement('script');
-      script.id = 'issue-9-debug-loader';
-      script.src = '/matching-debug.js';
-      doc.body.appendChild(script);
+      const matcher = doc.createElement('script');
+      matcher.id = 'issue-9-debug-loader';
+      matcher.src = '/matching-debug.js';
+      matcher.addEventListener('load', () => {
+        const filter = doc.createElement('script');
+        filter.id = 'issue-9-filter-loader';
+        filter.src = '/filter-debug.js';
+        doc.body.appendChild(filter);
+      });
+      doc.body.appendChild(matcher);
     });
   </script>
 </body>
