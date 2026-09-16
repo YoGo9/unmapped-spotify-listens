@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Issue #9 Matching Debug</title>
+  <style>
+    html, body, iframe {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      border: 0;
+      overflow: hidden;
+      background: #222;
+    }
+  </style>
+</head>
+<body>
+  <iframe id="app" src="/" title="Unmapped Spotify Listens matching debug"></iframe>
+  <script>
+    const frame = document.getElementById('app');
+    frame.addEventListener('load', () => {
+      const doc = frame.contentDocument;
+      if (!doc || doc.getElementById('issue-9-debug-loader')) return;
+
+      const script = doc.createElement('script');
+      script.id = 'issue-9-debug-loader';
+      script.src = '/matching-debug.js';
+      doc.body.appendChild(script);
+    });
+  </script>
+</body>
+</html>
