@@ -6,7 +6,7 @@
   const LISTENBRAINZ_ORIGIN = 'https://api.listenbrainz.org';
   const originalFetch = window.fetch.bind(window);
   const REQUEST_TIMEOUT_MS = 90000;
-  const RETRYABLE_PROXY_STATUSES = new Set([500, 502, 503, 504, 520, 521, 522, 523, 524, 525, 526]);
+  const RETRYABLE_PROXY_STATUSES = new Set([410, 500, 502, 503, 504, 520, 521, 522, 523, 524, 525, 526]);
 
   // When hosted on Cloudflare Pages, use the same-origin Pages Function so
   // ListenBrainz receives the required identifying User-Agent. A custom proxy
@@ -117,9 +117,8 @@
     }
 
     // Prefer the Cloudflare Pages proxy because it can send the identifying
-    // User-Agent required by ListenBrainz. If Cloudflare or the upstream host
-    // returns an infrastructure-style 5xx, retry the original browser request
-    // instead of leaving the app stuck on a spinner.
+    // User-Agent required by ListenBrainz. Retry transient/proxy-style errors,
+    // including 410 responses occasionally seen from the API host.
     if (proxyBase) {
       let proxyResponse = null;
 
