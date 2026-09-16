@@ -5,7 +5,7 @@
 (() => {
   const LISTENBRAINZ_ORIGIN = 'https://api.listenbrainz.org';
   const originalFetch = window.fetch.bind(window);
-  const REQUEST_TIMEOUT_MS = 20000;
+  const REQUEST_TIMEOUT_MS = 90000;
   const RETRYABLE_PROXY_STATUSES = new Set([500, 502, 503, 504, 520, 521, 522, 523, 524, 525, 526]);
 
   // When hosted on Cloudflare Pages, use the same-origin Pages Function so
