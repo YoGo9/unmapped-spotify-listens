@@ -117,8 +117,8 @@
     }
 
     // Prefer the Cloudflare Pages proxy because it can send the identifying
-    // User-Agent required by ListenBrainz. Retry transient/proxy-style errors,
-    // including 410 responses occasionally seen from the API host.
+    // User-Agent required by ListenBrainz. If the proxy gets a retired/failed
+    // upstream response, retry the original browser request.
     if (proxyBase) {
       let proxyResponse = null;
 
@@ -149,9 +149,35 @@
     return normalizeListenResponse(response, originalUrl);
   };
 
-  // Load the existing application without changing its UI or behaviour.
+  function loadMatchingEnhancements() {
+    if (!document.getElementById('matching-production-style')) {
+      const style = document.createElement('style');
+      style.id = 'matching-production-style';
+      style.textContent = '.matching-debug-banner { display: none !important; }';
+      document.head.appendChild(style);
+    }
+
+    if (document.getElementById('matching-production-loader')) return;
+
+    const matcher = document.createElement('script');
+    matcher.id = 'matching-production-loader';
+    matcher.src = 'matching-debug.js';
+    matcher.async = false;
+    matcher.addEventListener('load', () => {
+      if (document.getElementById('filter-production-loader')) return;
+      const filter = document.createElement('script');
+      filter.id = 'filter-production-loader';
+      filter.src = 'filter-debug.js';
+      filter.async = false;
+      document.body.appendChild(filter);
+    });
+    document.body.appendChild(matcher);
+  }
+
+  // Load the existing application first, then the tested matching/filter tools.
   const script = document.createElement('script');
   script.src = 'app-original.js';
   script.async = false;
+  script.addEventListener('load', loadMatchingEnhancements);
   document.body.appendChild(script);
 })();
