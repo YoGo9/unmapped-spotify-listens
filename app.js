@@ -5,6 +5,8 @@
 (() => {
   const LISTENBRAINZ_ORIGIN = 'https://api.listenbrainz.org';
   const originalFetch = window.fetch.bind(window);
+  const REQUEST_TIMEOUT_MS = 20000;
+  const RETRYABLE_PROXY_STATUSES = new Set([500, 502, 503, 504, 520, 521, 522, 523, 524, 525, 526]);
 
   // When hosted on Cloudflare Pages, use the same-origin Pages Function so
   // ListenBrainz receives the required identifying User-Agent. A custom proxy
@@ -15,6 +17,13 @@
       ? `${window.location.origin}/api/listenbrainz`
       : null);
 
+  function getRequestUrl(input) {
+    if (typeof input === 'string') return input;
+    if (input instanceof URL) return input.toString();
+    if (input instanceof Request) return input.url;
+    return String(input);
+  }
+
   function isListenBrainzUrl(url) {
     return url === LISTENBRAINZ_ORIGIN || url.startsWith(`${LISTENBRAINZ_ORIGIN}/`);
   }
@@ -23,6 +32,37 @@
     if (!proxyBase) return url;
     const relative = url.slice(LISTENBRAINZ_ORIGIN.length).replace(/^\//, '');
     return `${proxyBase.replace(/\/$/, '')}/${relative}`;
+  }
+
+  async function fetchWithTimeout(input, init) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+    const suppliedSignal = init?.signal;
+
+    if (suppliedSignal) {
+      if (suppliedSignal.aborted) {
+        controller.abort();
+      } else {
+        suppliedSignal.addEventListener('abort', () => controller.abort(), { once: true });
+      }
+    }
+
+    try {
+      return await originalFetch(input, {
+        ...(init || {}),
+        signal: controller.signal,
+      });
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
+  async function performFetch(targetUrl, input, init) {
+    if (input instanceof Request) {
+      const request = new Request(targetUrl, input);
+      return fetchWithTimeout(request, init);
+    }
+    return fetchWithTimeout(targetUrl, init);
   }
 
   async function normalizeListenResponse(response, originalUrl) {
@@ -70,29 +110,43 @@
   }
 
   window.fetch = async function patchedFetch(input, init) {
-    const originalUrl =
-      typeof input === 'string'
-        ? input
-        : input instanceof URL
-          ? input.toString()
-          : input instanceof Request
-            ? input.url
-            : String(input);
+    const originalUrl = getRequestUrl(input);
 
     if (!isListenBrainzUrl(originalUrl)) {
       return originalFetch(input, init);
     }
 
-    const targetUrl = toProxyUrl(originalUrl);
-    let response;
+    // Prefer the Cloudflare Pages proxy because it can send the identifying
+    // User-Agent required by ListenBrainz. If Cloudflare or the upstream host
+    // returns an infrastructure-style 5xx, retry the original browser request
+    // instead of leaving the app stuck on a spinner.
+    if (proxyBase) {
+      let proxyResponse = null;
 
-    if (input instanceof Request) {
-      const request = new Request(targetUrl, input);
-      response = await originalFetch(request, init);
-    } else {
-      response = await originalFetch(targetUrl, init);
+      try {
+        proxyResponse = await performFetch(toProxyUrl(originalUrl), input, init);
+
+        if (!RETRYABLE_PROXY_STATUSES.has(proxyResponse.status)) {
+          return normalizeListenResponse(proxyResponse, originalUrl);
+        }
+
+        console.warn(`ListenBrainz proxy returned ${proxyResponse.status}; retrying direct request.`);
+      } catch (error) {
+        console.warn('ListenBrainz proxy request failed; retrying direct request.', error);
+      }
+
+      try {
+        const directResponse = await performFetch(originalUrl, input, init);
+        return normalizeListenResponse(directResponse, originalUrl);
+      } catch (error) {
+        if (proxyResponse) {
+          return proxyResponse;
+        }
+        throw error;
+      }
     }
 
+    const response = await performFetch(originalUrl, input, init);
     return normalizeListenResponse(response, originalUrl);
   };
 
