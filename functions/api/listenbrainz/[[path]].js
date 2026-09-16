@@ -1,7 +1,7 @@
 const PRIMARY_ORIGIN = 'https://api.listenbrainz.org';
 const FALLBACK_ORIGIN = 'https://listenbrainz.org';
 const USER_AGENT = 'UnmappedSpotifyListens/1.2 ( https://github.com/YoGo9/unmapped-spotify-listens )';
-const RETRYABLE_STATUSES = new Set([500, 502, 503, 504, 520, 521, 522, 523, 524, 525, 526]);
+const RETRYABLE_STATUSES = new Set([410, 500, 502, 503, 504, 520, 521, 522, 523, 524, 525, 526]);
 
 function buildHeaders(request) {
   const headers = new Headers();
@@ -37,7 +37,7 @@ async function fetchUpstream(origin, path, search, request, bodyBytes) {
   return fetch(buildUpstreamUrl(origin, path, search), init);
 }
 
-function copyResponse(upstreamResponse) {
+function copyResponse(upstreamResponse, upstreamLabel) {
   const headers = new Headers();
   const contentType = upstreamResponse.headers.get('Content-Type');
   const retryAfter = upstreamResponse.headers.get('Retry-After');
@@ -46,6 +46,7 @@ function copyResponse(upstreamResponse) {
   if (retryAfter) headers.set('Retry-After', retryAfter);
   headers.set('Cache-Control', 'no-store');
   headers.set('X-Unmapped-Spotify-Proxy', '1.2');
+  headers.set('X-Unmapped-Spotify-Upstream', upstreamLabel);
 
   return new Response(upstreamResponse.body, {
     status: upstreamResponse.status,
@@ -64,6 +65,7 @@ export async function onRequest(context) {
     : await request.arrayBuffer();
 
   try {
+    let upstreamLabel = 'api.listenbrainz.org';
     let upstreamResponse = await fetchUpstream(
       PRIMARY_ORIGIN,
       path,
@@ -73,6 +75,7 @@ export async function onRequest(context) {
     );
 
     if (RETRYABLE_STATUSES.has(upstreamResponse.status)) {
+      upstreamLabel = 'listenbrainz.org';
       upstreamResponse = await fetchUpstream(
         FALLBACK_ORIGIN,
         path,
@@ -82,7 +85,7 @@ export async function onRequest(context) {
       );
     }
 
-    return copyResponse(upstreamResponse);
+    return copyResponse(upstreamResponse, upstreamLabel);
   } catch (error) {
     return new Response(JSON.stringify({
       error: 'ListenBrainz proxy request failed',
