@@ -6,6 +6,7 @@
   const LISTENBRAINZ_ORIGIN = 'https://api.listenbrainz.org';
   const originalFetch = window.fetch.bind(window);
   const REQUEST_TIMEOUT_MS = 90000;
+  const LISTEN_PAGE_SIZE = 100;
   const RETRYABLE_PROXY_STATUSES = new Set([410, 500, 502, 503, 504, 520, 521, 522, 523, 524, 525, 526]);
 
   // When hosted on Cloudflare Pages, use the same-origin Pages Function so
@@ -24,8 +25,21 @@
     return String(input);
   }
 
+  function getRequestMethod(input, init) {
+    return String(init?.method || (input instanceof Request ? input.method : 'GET')).toUpperCase();
+  }
+
   function isListenBrainzUrl(url) {
     return url === LISTENBRAINZ_ORIGIN || url.startsWith(`${LISTENBRAINZ_ORIGIN}/`);
+  }
+
+  function isUserListensUrl(url) {
+    try {
+      const parsed = new URL(url);
+      return /^\/1\/user\/[^/]+\/listens$/.test(parsed.pathname);
+    } catch {
+      return false;
+    }
   }
 
   function toProxyUrl(url) {
@@ -109,13 +123,7 @@
     }
   }
 
-  window.fetch = async function patchedFetch(input, init) {
-    const originalUrl = getRequestUrl(input);
-
-    if (!isListenBrainzUrl(originalUrl)) {
-      return originalFetch(input, init);
-    }
-
+  async function fetchListenBrainzOnce(originalUrl, input, init) {
     // Prefer the Cloudflare Pages proxy because it can send the identifying
     // User-Agent required by ListenBrainz. If the proxy gets a retired/failed
     // upstream response, retry the original browser request.
@@ -147,6 +155,104 @@
 
     const response = await performFetch(originalUrl, input, init);
     return normalizeListenResponse(response, originalUrl);
+  }
+
+  async function fetchListenPages(originalUrl, input, init) {
+    const requestedUrl = new URL(originalUrl);
+    const requestedCount = Math.max(1, Number.parseInt(requestedUrl.searchParams.get('count') || '25', 10) || 25);
+
+    if (requestedCount <= LISTEN_PAGE_SIZE || requestedUrl.searchParams.has('min_ts')) {
+      return fetchListenBrainzOnce(originalUrl, input, init);
+    }
+
+    const combinedListens = [];
+    let remaining = requestedCount;
+    let nextMaxTs = requestedUrl.searchParams.get('max_ts');
+    let firstPayload = null;
+    let lastHeaders = null;
+
+    while (remaining > 0) {
+      const pageSize = Math.min(LISTEN_PAGE_SIZE, remaining);
+      const pageUrl = new URL(originalUrl);
+      pageUrl.searchParams.set('count', String(pageSize));
+
+      if (nextMaxTs) {
+        pageUrl.searchParams.set('max_ts', String(nextMaxTs));
+      } else {
+        pageUrl.searchParams.delete('max_ts');
+      }
+
+      const pageResponse = await fetchListenBrainzOnce(pageUrl.toString(), input, init);
+      if (!pageResponse.ok) {
+        return pageResponse;
+      }
+
+      lastHeaders = new Headers(pageResponse.headers);
+
+      let pageData;
+      try {
+        pageData = await pageResponse.json();
+      } catch (error) {
+        console.warn('Could not parse paged ListenBrainz response:', error);
+        return pageResponse;
+      }
+
+      const pageListens = pageData?.payload?.listens;
+      if (!Array.isArray(pageListens)) {
+        return new Response(JSON.stringify(pageData), {
+          status: pageResponse.status,
+          statusText: pageResponse.statusText,
+          headers: lastHeaders,
+        });
+      }
+
+      if (!firstPayload && pageData?.payload) {
+        firstPayload = { ...pageData.payload };
+      }
+
+      combinedListens.push(...pageListens);
+      remaining = requestedCount - combinedListens.length;
+
+      if (pageListens.length < pageSize || remaining <= 0) {
+        break;
+      }
+
+      const oldest = pageListens[pageListens.length - 1]?.listened_at;
+      if (!Number.isFinite(Number(oldest))) {
+        break;
+      }
+
+      nextMaxTs = Number(oldest);
+    }
+
+    const payload = firstPayload || {};
+    payload.listens = combinedListens.slice(0, requestedCount);
+    payload.count = payload.listens.length;
+
+    const headers = lastHeaders || new Headers();
+    headers.set('Content-Type', 'application/json');
+    headers.set('Cache-Control', 'no-store');
+    headers.delete('Content-Length');
+    headers.set('X-Unmapped-Spotify-Paged', '1');
+
+    return new Response(JSON.stringify({ payload }), {
+      status: 200,
+      headers,
+    });
+  }
+
+  window.fetch = async function patchedFetch(input, init) {
+    const originalUrl = getRequestUrl(input);
+
+    if (!isListenBrainzUrl(originalUrl)) {
+      return originalFetch(input, init);
+    }
+
+    if (getRequestMethod(input, init) === 'GET' && isUserListensUrl(originalUrl)) {
+      return fetchListenPages(originalUrl, input, init);
+    }
+
+    return fetchListenBrainzOnce(originalUrl, input, init);
   };
 
   function loadMatchingEnhancements() {
