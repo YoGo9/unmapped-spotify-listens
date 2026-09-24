@@ -91,12 +91,23 @@
 
   function renderExport(exp) {
     state.currentExport = exp;
+    const statusClass = String(exp.status || 'unknown').replace(/[^a-z0-9_-]/gi, '_');
+    const statusLabel = String(exp.status || 'unknown').replace(/_/g, ' ');
+
     setExportPanel(`
-      <div class="status-line"><strong>Export #${escapeHtml(exp.export_id)}</strong> · ${escapeHtml(exp.status)}</div>
-      <div class="status-line">${escapeHtml(exp.progress || '')}</div>
-      <div class="history-detail">Created: ${escapeHtml(formatDate(exp.created))}</div>
-      ${exp.available_until ? `<div class="history-detail">Available until: ${escapeHtml(formatDate(exp.available_until))}</div>` : ''}
-      ${exp.filename ? `<div class="history-detail">File: ${escapeHtml(exp.filename)}</div>` : ''}
+      <div class="export-heading">
+        <div>
+          <div class="export-eyebrow">ListenBrainz Export</div>
+          <div class="export-id">Export #${escapeHtml(exp.export_id)}</div>
+        </div>
+        <span class="status-badge status-${escapeHtml(statusClass)}">${escapeHtml(statusLabel)}</span>
+      </div>
+      <div class="export-progress-text">${escapeHtml(exp.progress || '')}</div>
+      <div class="export-meta">
+        <div class="export-meta-item">Created<strong>${escapeHtml(formatDate(exp.created))}</strong></div>
+        ${exp.available_until ? `<div class="export-meta-item">Available until<strong>${escapeHtml(formatDate(exp.available_until))}</strong></div>` : ''}
+        ${exp.filename ? `<div class="export-meta-item" style="grid-column:1/-1">File<strong>${escapeHtml(exp.filename)}</strong></div>` : ''}
+      </div>
     `);
 
     const actions = $('export-actions');
@@ -106,9 +117,15 @@
       stopPolling();
       $('export-progress').classList.add('hidden');
       const button = document.createElement('button');
-      button.textContent = 'Process This Export';
+      button.className = 'process-export-button';
+      button.textContent = 'Process Export';
       button.addEventListener('click', () => processRemoteExport(exp));
       actions.appendChild(button);
+
+      const note = document.createElement('div');
+      note.className = 'export-action-note';
+      note.textContent = 'The ZIP is downloaded and processed locally in your browser.';
+      actions.appendChild(note);
     } else if (exp.status === 'failed') {
       stopPolling();
       $('export-progress').classList.add('hidden');
