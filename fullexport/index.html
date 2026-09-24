@@ -372,6 +372,73 @@
       border-radius: 8px;
     }
 
+    .range-card {
+      margin: 18px 0 12px;
+      padding: 18px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--card);
+      box-shadow: 0 3px 12px rgba(0,0,0,.04);
+    }
+
+    .range-heading {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .range-title {
+      font-size: 16px;
+      font-weight: 800;
+    }
+
+    .range-subtitle {
+      margin-top: 3px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.4;
+    }
+
+    .range-controls {
+      display: grid;
+      grid-template-columns: minmax(220px, 1fr) 2fr;
+      gap: 12px;
+      align-items: end;
+    }
+
+    #history-range,
+    #custom-start,
+    #custom-end {
+      min-height: 44px;
+      border-radius: 8px;
+    }
+
+    .custom-range {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    input[type="date"] {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid var(--border);
+      background: var(--input);
+      color: var(--text);
+    }
+
+    .range-preview {
+      margin-top: 12px;
+      padding: 9px 11px;
+      border-radius: 8px;
+      background: color-mix(in srgb, var(--primary) 8%, var(--panel));
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 600;
+    }
+
     #toggle-token {
       min-width: 74px;
       border: 1px solid var(--border);
@@ -605,6 +672,8 @@
       .theme-label { display: none; }
       h1 { font-size: 28px; }
       .export-meta { grid-template-columns: 1fr; }
+      .range-controls { grid-template-columns: 1fr; }
+      .custom-range { grid-template-columns: 1fr 1fr; }
     }
   </style>
 
@@ -635,9 +704,46 @@
       <button type="button" class="secondary" id="toggle-token">Show</button>
     </div>
 
+    <div class="range-card">
+      <div class="range-heading">
+        <div>
+          <div class="range-title">History Range</div>
+          <div class="range-subtitle">Choose exactly how much history ListenBrainz should export.</div>
+        </div>
+      </div>
+
+      <div class="range-controls">
+        <div>
+          <label for="history-range">Range</label>
+          <select id="history-range">
+            <option value="full">Full history</option>
+            <option value="1m">Last month</option>
+            <option value="3m">Last 3 months</option>
+            <option value="6m">Last 6 months</option>
+            <option value="1y">Last year</option>
+            <option value="2y">Last 2 years</option>
+            <option value="custom">Custom range</option>
+          </select>
+        </div>
+
+        <div id="custom-range" class="custom-range hidden">
+          <div>
+            <label for="custom-start">From</label>
+            <input type="date" id="custom-start">
+          </div>
+          <div>
+            <label for="custom-end">To</label>
+            <input type="date" id="custom-end">
+          </div>
+        </div>
+      </div>
+
+      <div id="range-preview" class="range-preview">Full listening history</div>
+    </div>
+
     <div class="button-row">
       <button type="button" id="check-exports">Check Existing Exports</button>
-      <button type="button" id="request-export">Request New Full Export</button>
+      <button type="button" id="request-export">Request Full History Export</button>
     </div>
 
     <div id="export-panel" class="panel hidden">
