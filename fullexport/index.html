@@ -241,15 +241,389 @@
       .token-row { grid-template-columns: 1fr; }
     }
   </style>
+
+  <style id="fullexport-polish">
+    body {
+      min-height: 100vh;
+      padding: 44px 0;
+      background:
+        radial-gradient(circle at top, rgba(40, 167, 69, .08), transparent 34rem),
+        var(--bg);
+    }
+
+    .container {
+      max-width: 920px;
+      padding: 26px;
+      border: 1px solid color-mix(in srgb, var(--border) 75%, transparent);
+      border-radius: 16px;
+      box-shadow: 0 18px 50px var(--shadow);
+    }
+
+    .top-actions {
+      margin-bottom: 24px;
+    }
+
+    .top-links {
+      gap: 9px;
+    }
+
+    .nav-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 12px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: var(--card);
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: transform .15s ease, border-color .15s ease, background .15s ease;
+    }
+
+    .nav-pill:hover {
+      text-decoration: none;
+      transform: translateY(-1px);
+      border-color: var(--primary);
+      background: var(--panel);
+    }
+
+    .github-pill::before {
+      content: "↗";
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .theme-toggle {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      margin: 0;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--muted);
+    }
+
+    .theme-label {
+      white-space: nowrap;
+    }
+
+    .toggle-switch {
+      position: relative;
+      display: inline-block;
+      width: 46px;
+      height: 24px;
+      flex: none;
+    }
+
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+      position: absolute;
+    }
+
+    .toggle-slider {
+      position: absolute;
+      inset: 0;
+      cursor: pointer;
+      background: #aaa;
+      border-radius: 999px;
+      transition: .25s ease;
+      box-shadow: inset 0 0 0 1px rgba(0,0,0,.08);
+    }
+
+    .toggle-slider::before {
+      content: "";
+      position: absolute;
+      width: 18px;
+      height: 18px;
+      left: 3px;
+      top: 3px;
+      border-radius: 50%;
+      background: white;
+      box-shadow: 0 1px 4px rgba(0,0,0,.25);
+      transition: .25s ease;
+    }
+
+    .toggle-switch input:checked + .toggle-slider {
+      background: var(--primary);
+    }
+
+    .toggle-switch input:checked + .toggle-slider::before {
+      transform: translateX(22px);
+    }
+
+    h1 {
+      margin: 2px 0 8px;
+      font-size: 34px;
+      letter-spacing: -.6px;
+    }
+
+    .subtitle {
+      max-width: 650px;
+      margin: 0 auto 30px;
+      line-height: 1.45;
+    }
+
+    #api-token {
+      min-height: 44px;
+      border-radius: 8px;
+    }
+
+    #toggle-token {
+      min-width: 74px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--card);
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    #toggle-token:hover {
+      background: var(--panel);
+      border-color: var(--primary);
+    }
+
+    .button-row {
+      gap: 10px;
+      margin: 12px 0 20px;
+    }
+
+    #check-exports,
+    #request-export {
+      min-height: 44px;
+      border-radius: 9px;
+      font-weight: 700;
+      transition: transform .15s ease, box-shadow .15s ease, background .15s ease;
+    }
+
+    #check-exports {
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    #check-exports::before {
+      content: "↻";
+      margin-right: 7px;
+    }
+
+    #check-exports:hover {
+      background: var(--card);
+      border-color: var(--primary);
+      transform: translateY(-1px);
+    }
+
+    #request-export {
+      box-shadow: 0 5px 16px rgba(40,167,69,.22);
+    }
+
+    #request-export::before {
+      content: "+";
+      margin-right: 7px;
+      font-size: 17px;
+      line-height: 0;
+    }
+
+    #request-export:hover,
+    #export-actions .process-export-button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 22px rgba(40,167,69,.28);
+    }
+
+    .panel {
+      padding: 18px;
+      border-radius: 12px;
+      background: var(--card);
+      box-shadow: 0 3px 12px rgba(0,0,0,.04);
+    }
+
+    #export-panel {
+      padding: 20px;
+      border-color: color-mix(in srgb, var(--primary) 42%, var(--border));
+      background:
+        linear-gradient(135deg, rgba(40,167,69,.07), transparent 55%),
+        var(--card);
+    }
+
+    .export-heading {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      margin-bottom: 12px;
+    }
+
+    .export-eyebrow {
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+
+    .export-id {
+      font-size: 20px;
+      font-weight: 800;
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: capitalize;
+      border: 1px solid var(--border);
+      background: var(--panel);
+    }
+
+    .status-completed {
+      color: var(--primary);
+      border-color: color-mix(in srgb, var(--primary) 45%, var(--border));
+      background: color-mix(in srgb, var(--primary) 10%, var(--panel));
+    }
+
+    .status-waiting,
+    .status-in_progress {
+      color: var(--link);
+      border-color: color-mix(in srgb, var(--link) 45%, var(--border));
+      background: color-mix(in srgb, var(--link) 9%, var(--panel));
+    }
+
+    .status-failed {
+      color: var(--danger);
+      border-color: color-mix(in srgb, var(--danger) 45%, var(--border));
+    }
+
+    .export-progress-text {
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 10px;
+    }
+
+    .export-meta {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px 18px;
+      margin-top: 10px;
+    }
+
+    .export-meta-item {
+      min-width: 0;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .export-meta-item strong {
+      display: block;
+      margin-top: 2px;
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 600;
+      overflow-wrap: anywhere;
+    }
+
+    #export-actions {
+      display: block;
+      margin: 18px 0 0;
+    }
+
+    #export-actions .process-export-button {
+      width: 100%;
+      min-height: 52px;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: 800;
+      letter-spacing: .01em;
+      box-shadow: 0 5px 16px rgba(40,167,69,.22);
+      transition: transform .15s ease, box-shadow .15s ease;
+    }
+
+    #export-actions .process-export-button::after {
+      content: "  →";
+    }
+
+    .export-action-note {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 12px;
+      text-align: center;
+    }
+
+    .panel:has(#zip-file) {
+      border-style: dashed;
+      border-width: 1px;
+    }
+
+    .panel:has(#zip-file) > strong {
+      font-size: 16px;
+    }
+
+    #zip-file {
+      max-width: none;
+      width: 100%;
+      color: var(--muted);
+    }
+
+    #zip-file::file-selector-button {
+      margin-right: 10px;
+      padding: 8px 12px;
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      background: var(--panel);
+      color: var(--text);
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    .stat {
+      border-radius: 10px;
+      padding: 15px 12px;
+    }
+
+    .history-item {
+      border-radius: 10px;
+      padding: 15px;
+    }
+
+    .filters input,
+    .filters select {
+      min-height: 42px;
+      border-radius: 8px;
+    }
+
+    @media (max-width: 700px) {
+      body { padding: 18px 0; }
+      .container { padding: 18px; border-radius: 12px; }
+      .top-actions { align-items: flex-start; }
+      .top-links { flex-wrap: wrap; }
+      .theme-label { display: none; }
+      h1 { font-size: 28px; }
+      .export-meta { grid-template-columns: 1fr; }
+    }
+  </style>
+
 </head>
 <body>
   <div class="container">
     <div class="top-actions">
       <div class="top-links">
-        <a href="/">Recent Listens</a>
-        <a href="https://github.com/YoGo9/unmapped-spotify-listens" target="_blank" rel="noopener">GitHub</a>
+        <a href="/" class="nav-pill"><span aria-hidden="true">←</span> Recent Listens</a>
+        <a href="https://github.com/YoGo9/unmapped-spotify-listens" target="_blank" rel="noopener" class="nav-pill github-pill">GitHub</a>
       </div>
-      <label class="theme-toggle"><input type="checkbox" id="theme-toggle"> Dark mode</label>
+
+      <div class="theme-toggle">
+        <span class="theme-label">Dark Mode</span>
+        <label class="toggle-switch">
+          <input type="checkbox" id="theme-toggle">
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
     </div>
 
     <h1>Full ListenBrainz History</h1>
