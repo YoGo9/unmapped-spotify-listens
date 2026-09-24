@@ -389,7 +389,7 @@
     return promise;
   }
 
-  function renderCandidate(candidate, input) {
+  function renderCandidate(candidate, input, listen) {
     const card = document.createElement('div');
     card.className = `match-candidate confidence-${candidate.confidence}`;
 
@@ -413,11 +413,33 @@
       </div>
     `;
 
-    card.querySelector('.use-match-button').addEventListener('click', () => {
+    card.querySelector('.use-match-button').addEventListener('click', async (event) => {
+      const useButton = event.currentTarget;
+      const info = getListenInfo(listen);
+
+      if (!info.recordingMsid) {
+        alert('This listen has no recording MSID, so ListenBrainz cannot accept a manual mapping for it.');
+        return;
+      }
+
       input.value = `https://musicbrainz.org/recording/${candidate.mbid}`;
-      input.focus();
       input.classList.add('match-filled');
-      setTimeout(() => input.classList.remove('match-filled'), 1200);
+      useButton.disabled = true;
+      useButton.textContent = 'Submitting…';
+
+      try {
+        if (typeof window.submitManualMapping !== 'function') {
+          throw new Error('Mapping function is not available.');
+        }
+        await window.submitManualMapping(info.recordingMsid, input.id, info.title || candidate.title || 'recording');
+      } catch (error) {
+        console.error('Automatic mapping submission failed:', error);
+        alert(`Failed to submit mapping: ${error.message || error}`);
+      } finally {
+        useButton.disabled = false;
+        useButton.textContent = 'Use Match';
+        setTimeout(() => input.classList.remove('match-filled'), 1200);
+      }
     });
 
     return card;
@@ -447,7 +469,7 @@
       button.addEventListener('click', async () => {
         button.disabled = true;
         button.textContent = 'Checking…';
-        results.innerHTML = '<div class="match-status">Checking Spotify URL, ISRC and ListenBrainz…</div>';
+        results.innerHTML = '<div class="match-status">Checking origin URL, ISRC and ListenBrainz…</div>';
 
         try {
           const { info, candidates } = await findMatches(listen);
@@ -471,7 +493,7 @@
             results.appendChild(empty);
           } else {
             candidates.forEach(candidate => {
-              results.appendChild(renderCandidate(candidate, input));
+              results.appendChild(renderCandidate(candidate, input, listen));
             });
           }
         } catch (error) {
