@@ -279,14 +279,32 @@
     }
 
     .full-history-link {
-      color: var(--link-color);
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 7px 12px;
+      border: 1px solid var(--border-color);
+      border-radius: 999px;
+      background: var(--stats-bg);
+      color: var(--text-color);
       text-decoration: none;
-      font-size: 14px;
+      font-size: 13px;
+      font-weight: 600;
       white-space: nowrap;
+      transition: transform .15s ease, border-color .15s ease, background .15s ease;
     }
 
     .full-history-link:hover {
-      text-decoration: underline;
+      text-decoration: none;
+      transform: translateY(-1px);
+      border-color: var(--primary-color);
+      background: var(--container-bg);
+    }
+
+    .full-history-link .full-history-arrow {
+      color: var(--primary-color);
+      font-size: 15px;
+      line-height: 1;
     }
     
     /* Simple theme toggle */
@@ -404,7 +422,7 @@
         </svg>
       </a>
 
-      <a href="/fullexport/" class="full-history-link">Full History</a>
+      <a href="/fullexport/" class="full-history-link">Full History <span class="full-history-arrow" aria-hidden="true">→</span></a>
       
       <div class="theme-toggle">
         <span class="theme-label">Dark Mode</span>
