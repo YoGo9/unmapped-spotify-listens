@@ -3,6 +3,20 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script>
+    if (window.location.hostname === 'yogo9.github.io') {
+      const oldBase = '/unmapped-spotify-listens';
+      const path = window.location.pathname.startsWith(oldBase)
+        ? window.location.pathname.slice(oldBase.length)
+        : window.location.pathname;
+      window.location.replace(
+        'https://unmapped-spotify-listens.pages.dev' +
+        (path || '/') +
+        window.location.search +
+        window.location.hash
+      );
+    }
+  </script>
   <title>ListenBrainz Full History - Unmapped Listens</title>
   <style>
     :root {
