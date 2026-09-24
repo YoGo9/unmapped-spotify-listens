@@ -77,6 +77,142 @@
     return new Date(Number(ts) * 1000).toLocaleDateString();
   }
 
+  function formatRangeDate(ts) {
+    if (ts === null || ts === undefined || ts === '') return '';
+    const date = new Date(Number(ts) * 1000);
+    return Number.isNaN(date.getTime()) ? '' : date.toLocaleDateString();
+  }
+
+  function subtractMonthsClamped(date, months) {
+    const result = new Date(date);
+    const originalDay = result.getDate();
+    result.setDate(1);
+    result.setMonth(result.getMonth() - months);
+    const lastDay = new Date(result.getFullYear(), result.getMonth() + 1, 0).getDate();
+    result.setDate(Math.min(originalDay, lastDay));
+    return result;
+  }
+
+  function subtractYearsClamped(date, years) {
+    const result = new Date(date);
+    const originalMonth = result.getMonth();
+    result.setFullYear(result.getFullYear() - years);
+    if (result.getMonth() !== originalMonth) {
+      result.setDate(0);
+    }
+    return result;
+  }
+
+  function toUnixSeconds(date) {
+    return Math.floor(date.getTime() / 1000);
+  }
+
+  function getSelectedRange() {
+    const mode = $('history-range').value;
+    const now = new Date();
+    const end = new Date(now);
+    let start = null;
+    let label = 'Full history';
+
+    if (mode === '1m') {
+      start = subtractMonthsClamped(now, 1);
+      label = 'Last month';
+    } else if (mode === '3m') {
+      start = subtractMonthsClamped(now, 3);
+      label = 'Last 3 months';
+    } else if (mode === '6m') {
+      start = subtractMonthsClamped(now, 6);
+      label = 'Last 6 months';
+    } else if (mode === '1y') {
+      start = subtractYearsClamped(now, 1);
+      label = 'Last year';
+    } else if (mode === '2y') {
+      start = subtractYearsClamped(now, 2);
+      label = 'Last 2 years';
+    } else if (mode === 'custom') {
+      const startValue = $('custom-start').value;
+      const endValue = $('custom-end').value;
+
+      if (!startValue || !endValue) {
+        throw new Error('Choose both a From and To date for the custom range.');
+      }
+
+      start = new Date(`${startValue}T00:00:00`);
+      const customEnd = new Date(`${endValue}T23:59:59`);
+
+      if (Number.isNaN(start.getTime()) || Number.isNaN(customEnd.getTime())) {
+        throw new Error('Choose valid custom dates.');
+      }
+
+      if (start.getTime() > customEnd.getTime()) {
+        throw new Error('The From date cannot be after the To date.');
+      }
+
+      if (customEnd.getTime() > now.getTime()) {
+        throw new Error('The To date cannot be in the future.');
+      }
+
+      label = `${start.toLocaleDateString()} – ${customEnd.toLocaleDateString()}`;
+      return {
+        mode,
+        label,
+        start_time: toUnixSeconds(start),
+        end_time: toUnixSeconds(customEnd),
+      };
+    }
+
+    if (!start) {
+      return { mode, label, start_time: null, end_time: null };
+    }
+
+    return {
+      mode,
+      label,
+      start_time: toUnixSeconds(start),
+      end_time: toUnixSeconds(end),
+    };
+  }
+
+  function updateRangeUi() {
+    const mode = $('history-range').value;
+    $('custom-range').classList.toggle('hidden', mode !== 'custom');
+
+    let range;
+    try {
+      range = getSelectedRange();
+    } catch {
+      range = null;
+    }
+
+    const preview = $('range-preview');
+    const requestButton = $('request-export');
+
+    if (mode === 'custom' && !range) {
+      preview.textContent = 'Choose a From and To date.';
+      requestButton.textContent = 'Request Custom Range Export';
+      return;
+    }
+
+    if (!range || range.mode === 'full') {
+      preview.textContent = 'Full listening history';
+      requestButton.textContent = 'Request Full History Export';
+      return;
+    }
+
+    preview.textContent = range.label;
+    requestButton.textContent = `Request ${range.label} Export`;
+  }
+
+  function exportRangeLabel(exp) {
+    if (exp?.start_time == null && exp?.end_time == null) return 'Full history';
+    const start = formatRangeDate(exp?.start_time);
+    const end = formatRangeDate(exp?.end_time);
+    if (start && end) return `${start} – ${end}`;
+    if (start) return `From ${start}`;
+    if (end) return `Through ${end}`;
+    return 'Full history';
+  }
+
   function setExportPanel(message = '') {
     $('export-panel').classList.remove('hidden');
     if (message) $('export-status').innerHTML = message;
@@ -104,6 +240,7 @@
       </div>
       <div class="export-progress-text">${escapeHtml(exp.progress || '')}</div>
       <div class="export-meta">
+        <div class="export-meta-item">Range<strong>${escapeHtml(exportRangeLabel(exp))}</strong></div>
         <div class="export-meta-item">Created<strong>${escapeHtml(formatDate(exp.created))}</strong></div>
         ${exp.available_until ? `<div class="export-meta-item">Available until<strong>${escapeHtml(formatDate(exp.available_until))}</strong></div>` : ''}
         ${exp.filename ? `<div class="export-meta-item" style="grid-column:1/-1">File<strong>${escapeHtml(exp.filename)}</strong></div>` : ''}
@@ -189,6 +326,7 @@
   async function requestExport() {
     stopPolling();
     try {
+      const range = getSelectedRange();
       setExportPanel('Checking for an existing export first…');
       const exports = await getExportList();
       const pending = exports.find(exp => exp.status === 'waiting' || exp.status === 'in_progress');
@@ -198,7 +336,17 @@
         return;
       }
 
-      const response = await lbFetch('/1/export/', { method: 'POST' });
+      const options = { method: 'POST' };
+      if (range.start_time !== null || range.end_time !== null) {
+        options.headers = { 'Content-Type': 'application/json' };
+        options.body = JSON.stringify({
+          start_time: range.start_time,
+          end_time: range.end_time,
+        });
+      }
+
+      setExportPanel(`Requesting ${escapeHtml(range.label)} export…`);
+      const response = await lbFetch('/1/export/', options);
       const exp = await response.json();
       renderExport(exp);
     } catch (error) {
@@ -873,6 +1021,19 @@
       input.type = show ? 'text' : 'password';
       $('toggle-token').textContent = show ? 'Hide' : 'Show';
     });
+
+    const savedRange = localStorage.getItem('fullExportHistoryRange');
+    if (savedRange && [...$('history-range').options].some(option => option.value === savedRange)) {
+      $('history-range').value = savedRange;
+    }
+
+    $('history-range').addEventListener('change', () => {
+      localStorage.setItem('fullExportHistoryRange', $('history-range').value);
+      updateRangeUi();
+    });
+    $('custom-start').addEventListener('change', updateRangeUi);
+    $('custom-end').addEventListener('change', updateRangeUi);
+    updateRangeUi();
 
     $('check-exports').addEventListener('click', checkExports);
     $('request-export').addEventListener('click', requestExport);
