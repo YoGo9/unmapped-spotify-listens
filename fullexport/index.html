@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ListenBrainz Full History - Unmapped Listens</title>
+  <style>
+    :root {
+      --bg: #f5f5f5;
+      --panel: #fff;
+      --card: #fafafa;
+      --text: #333;
+      --muted: #666;
+      --border: #d0d0d0;
+      --input: #fff;
+      --primary: #28a745;
+      --primary-hover: #218838;
+      --link: #007bff;
+      --danger: #dc3545;
+      --shadow: rgba(0,0,0,.1);
+    }
+    body.dark-mode {
+      --bg: #222;
+      --panel: #333;
+      --card: #3a3a3a;
+      --text: #eee;
+      --muted: #bbb;
+      --border: #555;
+      --input: #444;
+      --primary: #2b9e48;
+      --primary-hover: #1c7430;
+      --link: #4da3ff;
+      --danger: #e55c6c;
+      --shadow: rgba(0,0,0,.3);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 24px 0;
+      font-family: Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+    .container {
+      width: 92%;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 20px;
+      background: var(--panel);
+      border-radius: 10px;
+      box-shadow: 0 0 10px var(--shadow);
+    }
+    .top-actions {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 15px;
+      margin-bottom: 16px;
+    }
+    .top-links { display: flex; gap: 14px; align-items: center; }
+    a { color: var(--link); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    h1 { text-align: center; margin: 0 0 8px; }
+    .subtitle { text-align: center; color: var(--muted); margin: 0 0 24px; }
+    label { display: block; margin-bottom: 6px; }
+    input[type="text"], input[type="password"], input[type="search"], select {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      background: var(--input);
+      color: var(--text);
+    }
+    .token-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    button {
+      padding: 10px 14px;
+      border: 0;
+      border-radius: 5px;
+      background: var(--primary);
+      color: #fff;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    button:hover { background: var(--primary-hover); }
+    button:disabled { opacity: .6; cursor: wait; }
+    .secondary { background: #6c757d; }
+    .secondary:hover { background: #5a6268; }
+    .danger { background: var(--danger); }
+    .button-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 10px 0 18px;
+    }
+    .button-row button { flex: 1 1 180px; }
+    .panel {
+      padding: 14px;
+      margin: 14px 0;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--card);
+    }
+    .hidden { display: none !important; }
+    .status-line { margin: 5px 0; }
+    .muted { color: var(--muted); }
+    .progress {
+      height: 8px;
+      overflow: hidden;
+      border-radius: 5px;
+      background: var(--border);
+      margin: 10px 0 5px;
+    }
+    .progress > div {
+      height: 100%;
+      width: 0;
+      background: var(--primary);
+      transition: width .25s ease;
+    }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin: 16px 0;
+    }
+    .stat {
+      padding: 12px;
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      text-align: center;
+      background: var(--card);
+    }
+    .stat strong { display: block; font-size: 22px; margin-top: 4px; }
+    .filters {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr;
+      gap: 8px;
+      margin: 15px 0;
+    }
+    .history-item {
+      padding: 13px;
+      margin: 10px 0;
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      background: var(--card);
+    }
+    .history-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: flex-start;
+    }
+    .history-title { font-weight: 700; }
+    .history-meta, .history-detail {
+      color: var(--muted);
+      font-size: 13px;
+      margin-top: 5px;
+    }
+    .count-badge {
+      white-space: nowrap;
+      padding: 4px 7px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      font-size: 12px;
+    }
+    .item-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      margin-top: 10px;
+    }
+    .item-actions button, .item-actions a {
+      width: auto;
+      padding: 7px 10px;
+      font-size: 13px;
+    }
+    .mapping-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 7px;
+      margin-top: 9px;
+    }
+    .match-results { margin-top: 9px; }
+    .candidate {
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 9px;
+      margin-top: 7px;
+      background: var(--panel);
+    }
+    .candidate-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      font-size: 13px;
+    }
+    .candidate-title { margin-top: 5px; }
+    .candidate-reason { color: var(--muted); font-size: 12px; margin-top: 4px; }
+    .candidate-actions {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      align-items: center;
+      margin-top: 7px;
+    }
+    .candidate-actions button { width: auto; padding: 6px 9px; }
+    .high { color: var(--primary); font-weight: 700; }
+    .error { color: var(--danger); }
+    .local-upload {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+    }
+    .local-upload input { max-width: 260px; }
+    .load-more { width: 100%; margin-top: 10px; }
+    .theme-toggle { display: flex; align-items: center; gap: 6px; font-size: 13px; }
+    @media (max-width: 700px) {
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .filters { grid-template-columns: 1fr; }
+      .history-top { flex-direction: column; }
+      .mapping-row { grid-template-columns: 1fr; }
+      .token-row { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="top-actions">
+      <div class="top-links">
+        <a href="/">Recent Listens</a>
+        <a href="https://github.com/YoGo9/unmapped-spotify-listens" target="_blank" rel="noopener">GitHub</a>
+      </div>
+      <label class="theme-toggle"><input type="checkbox" id="theme-toggle"> Dark mode</label>
+    </div>
+
+    <h1>Full ListenBrainz History</h1>
+    <p class="subtitle">Use a ListenBrainz export to find and map unmapped recordings across your full history.</p>
+
+    <label for="api-token">ListenBrainz API Token</label>
+    <div class="token-row">
+      <input type="password" id="api-token" placeholder="Enter ListenBrainz API token">
+      <button type="button" class="secondary" id="toggle-token">Show</button>
+    </div>
+
+    <div class="button-row">
+      <button type="button" id="check-exports">Check Existing Exports</button>
+      <button type="button" id="request-export">Request New Full Export</button>
+    </div>
+
+    <div id="export-panel" class="panel hidden">
+      <div id="export-status"></div>
+      <div class="progress hidden" id="export-progress"><div></div></div>
+      <div class="button-row" id="export-actions"></div>
+    </div>
+
+    <div class="panel">
+      <strong>Already have an export ZIP?</strong>
+      <div class="history-detail">Select it here. The ZIP is processed locally in your browser.</div>
+      <label class="local-upload" style="margin-top:10px">
+        <input type="file" id="zip-file" accept=".zip,application/zip">
+      </label>
+    </div>
+
+    <div id="processing-panel" class="panel hidden">
+      <strong id="processing-title">Processing export…</strong>
+      <div class="progress"><div id="processing-bar"></div></div>
+      <div class="history-detail" id="processing-detail"></div>
+    </div>
+
+    <div id="results" class="hidden">
+      <div class="stats-grid">
+        <div class="stat"><span>Total listens</span><strong id="stat-total">0</strong></div>
+        <div class="stat"><span>Mapped</span><strong id="stat-mapped">0</strong></div>
+        <div class="stat"><span>Unmapped listens</span><strong id="stat-unmapped">0</strong></div>
+        <div class="stat"><span>Unique unmapped</span><strong id="stat-unique">0</strong></div>
+      </div>
+
+      <div class="filters">
+        <input type="search" id="search" placeholder="Search artist, track, release…">
+        <select id="source-filter">
+          <option value="all">All sources</option>
+        </select>
+        <select id="sort">
+          <option value="count">Most listens</option>
+          <option value="newest">Newest first</option>
+          <option value="artist">Artist A–Z</option>
+        </select>
+      </div>
+
+      <div class="history-detail" id="result-summary"></div>
+      <div id="history-list"></div>
+      <button type="button" class="secondary load-more hidden" id="load-more">Show More</button>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
