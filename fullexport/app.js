@@ -788,9 +788,11 @@
           <button type="button">Use Match</button>
         </div>
       `;
-      card.querySelector('button').addEventListener('click', () => {
+      card.querySelector('button').addEventListener('click', async (event) => {
+        const useButton = event.currentTarget;
         input.value = `https://musicbrainz.org/recording/${item.mbid}`;
         input.focus();
+        await submitMapping(group, input, useButton);
       });
       container.appendChild(card);
     });
@@ -807,6 +809,7 @@
       return;
     }
 
+    const originalButtonText = button.textContent;
     button.disabled = true;
     button.textContent = 'Submitting…';
 
@@ -829,7 +832,7 @@
       alert(`Failed to map: ${error.message}`);
     } finally {
       button.disabled = false;
-      button.textContent = 'Submit MBID';
+      button.textContent = originalButtonText;
     }
   }
 
